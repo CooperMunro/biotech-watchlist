@@ -99,3 +99,6 @@ drop policy if exists "owner only" on discovery_runs;
 create policy "owner only" on discovery_runs for all to authenticated
   using ((auth.jwt() ->> 'email') = 'coop1090@outlook.com')
   with check ((auth.jwt() ->> 'email') = 'coop1090@outlook.com');
+
+-- AI research (same as migrations/003_enrichment.sql)
+alter table companies add column if not exists enriched_at timestamp;

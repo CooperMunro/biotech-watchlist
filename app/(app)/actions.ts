@@ -154,3 +154,30 @@ export async function runDiscovery(fd: FormData) {
   revalidateAll();
   redirect(`/discover?${query}`);
 }
+
+export async function researchCompany(id: string) {
+  const { enrichCompany } = await import("@/lib/enrich");
+  const supabase = await createClient();
+  let query = "researched=1";
+  try {
+    await enrichCompany(supabase, id);
+  } catch (e) {
+    query = `error=${encodeURIComponent(e instanceof Error ? e.message : String(e))}`;
+  }
+  revalidateAll();
+  redirect(`/watchlist/${id}?${query}`);
+}
+
+export async function researchNext() {
+  const { enrichNext } = await import("@/lib/enrich");
+  const supabase = await createClient();
+  let query: string;
+  try {
+    const r = await enrichNext(supabase);
+    query = `researched=${r.done}&remaining=${r.remaining}` + (r.failed.length ? `&failed=${encodeURIComponent(r.failed.join("; "))}` : "");
+  } catch (e) {
+    query = `error=${encodeURIComponent(e instanceof Error ? e.message : String(e))}`;
+  }
+  revalidateAll();
+  redirect(`/discover?${query}`);
+}

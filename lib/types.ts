@@ -27,6 +27,7 @@ export type Company = {
   last_reviewed: string | null;
   source: "manual" | "auto" | null;
   discovered_at: string | null;
+  enriched_at: string | null;
   created_at: string;
   updated_at: string;
 };

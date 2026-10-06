@@ -5,23 +5,25 @@ import { TierBadge } from "@/components/Badges";
 import DbError from "@/components/DbError";
 import SubmitButton from "@/components/SubmitButton";
 import type { Company } from "@/lib/types";
-import { runDiscovery } from "../actions";
+import { researchNext, runDiscovery } from "../actions";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 type Run = { id: string; ran_at: string; trigger: string; added: number; scanned: number; error: string | null };
 
 export default async function Discover({
   searchParams,
 }: {
-  searchParams: Promise<{ added?: string; scanned?: string; error?: string }>;
+  searchParams: Promise<{ added?: string; scanned?: string; error?: string; researched?: string; remaining?: string; failed?: string }>;
 }) {
   const sp = await searchParams;
   const supabase = await createClient();
-  const [runsRes, autoRes] = await Promise.all([
+  const [runsRes, autoRes, pendingRes] = await Promise.all([
     supabase.from("discovery_runs").select("*").order("ran_at", { ascending: false }).limit(10),
     supabase.from("companies").select("*").eq("source", "auto").order("discovered_at", { ascending: false }).limit(50),
+    supabase.from("companies").select("id", { count: "exact", head: true }).is("enriched_at", null),
   ]);
+  const pending = pendingRes.count ?? 0;
   if (runsRes.error) return <DbError message={runsRes.error.message} />;
   if (autoRes.error) return <DbError message={autoRes.error.message} />;
   const runs = (runsRes.data ?? []) as Run[];
@@ -41,6 +43,12 @@ export default async function Discover({
       {sp.added !== undefined && (
         <p className="rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           Added {sp.added} new compan{sp.added === "1" ? "y" : "ies"} from {sp.scanned} trials scanned.
+        </p>
+      )}
+      {sp.researched !== undefined && (
+        <p className="rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          Researched {sp.researched} compan{sp.researched === "1" ? "y" : "ies"}; {sp.remaining} still waiting.
+          {sp.failed ? ` Failed: ${sp.failed}` : ""}
         </p>
       )}
       {sp.error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-800">Discovery failed: {sp.error}</p>}
@@ -67,6 +75,15 @@ export default async function Discover({
         <SubmitButton pendingLabel="Scanning… (up to a minute)">Find companies</SubmitButton>
       </form>
 
+      <form action={researchNext} className="card flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm text-gray-700">
+          <div className="font-semibold">AI research</div>
+          Fills in financing, runway, team, market and key risk from the web, then re-scores.{" "}
+          <strong>{pending}</strong> compan{pending === 1 ? "y is" : "ies are"} waiting. Runs 5 at a time, and 5 more every day automatically.
+        </div>
+        <SubmitButton pendingLabel="Researching 5… (1–3 minutes)">Research next 5</SubmitButton>
+      </form>
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <h2 className="mb-2 font-semibold">Recently discovered</h2>
@@ -79,11 +96,12 @@ export default async function Discover({
                   <th className="th">Score</th>
                   <th className="th">Stage / modality</th>
                   <th className="th">Catalyst</th>
+                  <th className="th">Researched</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {recent.length === 0 && (
-                  <tr><td colSpan={5} className="td py-6 text-center text-gray-500">Nothing discovered yet. Click Find companies.</td></tr>
+                  <tr><td colSpan={6} className="td py-6 text-center text-gray-500">Nothing discovered yet. Click Find companies.</td></tr>
                 )}
                 {recent.map((c) => (
                   <tr key={c.id}>
@@ -95,6 +113,7 @@ export default async function Discover({
                     <td className="td">{c.score ?? "—"}</td>
                     <td className="td">{c.stage ?? "—"}<div className="text-xs text-gray-500">{c.modality ?? ""}</div></td>
                     <td className="td whitespace-nowrap">{fmtDate(c.catalyst_date)}</td>
+                    <td className="td">{c.enriched_at ? "✓" : "—"}</td>
                   </tr>
                 ))}
               </tbody>

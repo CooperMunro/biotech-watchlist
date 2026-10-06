@@ -5,17 +5,20 @@ import CompanyForm from "@/components/CompanyForm";
 import { DaysOut, DecisionBadge, TierBadge } from "@/components/Badges";
 import { fmtDate } from "@/lib/dates";
 import type { Company } from "@/lib/types";
-import { deleteCompany, updateCompany } from "../../actions";
+import SubmitButton from "@/components/SubmitButton";
+import { deleteCompany, researchCompany, updateCompany } from "../../actions";
+
+export const maxDuration = 300;
 
 export default async function CompanyDetail({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; researched?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { saved } = await searchParams;
+  const { saved, researched, error } = await searchParams;
   const supabase = await createClient();
   const { data } = await supabase.from("companies").select("*").eq("id", id).maybeSingle();
   if (!data) notFound();
@@ -23,6 +26,7 @@ export default async function CompanyDetail({
 
   const update = updateCompany.bind(null, c.id);
   const remove = deleteCompany.bind(null, c.id);
+  const research = researchCompany.bind(null, c.id);
 
   return (
     <div className="space-y-6">
@@ -40,12 +44,22 @@ export default async function CompanyDetail({
             <span>{c.modality ?? "—"} · {c.lead_program ?? "—"} · {c.stage ?? "—"}</span>
           </div>
         </div>
-        <form action={remove}>
-          <button className="btn-danger">Delete</button>
-        </form>
+        <div className="flex gap-2">
+          <form action={research}>
+            <SubmitButton pendingLabel="Researching… (about a minute)">
+              {c.enriched_at ? "Re-run AI research" : "Run AI research"}
+            </SubmitButton>
+          </form>
+          <form action={remove}>
+            <button className="btn-danger">Delete</button>
+          </form>
+        </div>
       </div>
 
       {saved && <p className="rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Saved.</p>}
+      {researched && <p className="rounded bg-emerald-50 px-3 py-2 text-sm text-emerald-800">AI research added. Blank fields were filled in and the score was updated.</p>}
+      {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
+      {c.enriched_at && <p className="text-xs text-gray-500">AI research last run {fmtDate(c.enriched_at.slice(0, 10))}. Check the sources before acting on it.</p>}
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="card">

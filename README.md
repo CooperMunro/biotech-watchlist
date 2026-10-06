@@ -74,3 +74,11 @@ It also runs weekly (Mondays 13:00 UTC) through Vercel Cron, configured in `verc
 1. Run `supabase/migrations/002_discovery.sql` in the SQL Editor (already included in `schema.sql` for new installs).
 2. In Vercel, add `SUPABASE_SERVICE_ROLE_KEY` (Secret; Supabase → Settings → API Keys → service_role/secret) and `CRON_SECRET` (Secret; any long random string). Optional: `DISCOVERY_CONDITIONS` for the weekly run's disease focus.
 3. Redeploy.
+
+## AI research
+Fills in ticker, last financing (amount, date, lead investor), cash runway, key risk and a market summary from the web using Claude (Opus 5.5 with web search), adds the team/funding/market rubric scores, and re-scores and re-tiers the company. Only blank fields are filled, so manual edits are kept.
+
+- Per company: **Run AI research** on the company page.
+- In bulk: **Research next 5** on `/discover`, plus a daily Vercel Cron (`/api/enrich`, 14:00 UTC) that researches 5 more.
+- Setup: run `supabase/migrations/003_enrichment.sql`, add `ANTHROPIC_API_KEY` (Secret) in Vercel, redeploy. `CRON_SECRET` and `SUPABASE_SERVICE_ROLE_KEY` from auto-discovery are reused by the daily job.
+- Cost is billed to your Anthropic account per company researched (model tokens plus web searches).
