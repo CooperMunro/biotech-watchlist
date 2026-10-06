@@ -4,7 +4,22 @@ import { isAllowedEmail } from "@/lib/auth";
 
 const PUBLIC_PATHS = ["/login", "/auth/callback"];
 
+const REQUIRED_ENV = {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  ALLOWED_EMAIL: process.env.ALLOWED_EMAIL,
+};
+
 export async function middleware(request: NextRequest) {
+  const missing = Object.entries(REQUIRED_ENV).filter(([, v]) => !v).map(([k]) => k);
+  if (missing.length) {
+    return new NextResponse(
+      `Biotech Watchlist is not configured. Missing environment variables: ${missing.join(", ")}.\n` +
+        "Add them in Vercel → Settings → Environment Variables, then redeploy.",
+      { status: 500, headers: { "content-type": "text/plain" } }
+    );
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
