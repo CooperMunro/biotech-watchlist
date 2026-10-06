@@ -51,6 +51,9 @@ Open http://localhost:3000, enter your email, click the link in the email.
 2. Add the same four env vars in Vercel → Settings → Environment Variables, with `NEXT_PUBLIC_SITE_URL` set to your Vercel URL (e.g. `https://biotech-watchlist.vercel.app`).
 3. In Supabase → URL Configuration, set Site URL to the Vercel URL and add `https://<your-vercel-url>/auth/callback` to Redirect URLs.
 
+## Password login (avoids email limits)
+Supabase's free email service only sends a few login emails per hour. To sign in without email: Supabase → Authentication → Users → delete your user, then **Add user → Create new user** with your email, a password, and **Auto Confirm User** ticked. Then use "Sign in with a password instead" on the login page.
+
 ## How access is locked down
 Four layers, any one of which blocks a stranger:
 1. The login action only sends a link if the email matches `ALLOWED_EMAIL` (same response either way, so the page doesn't leak your address).

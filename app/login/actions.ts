@@ -28,3 +28,16 @@ export async function sendMagicLink(formData: FormData) {
   if (error) redirect(`/login?error=${encodeURIComponent(error.message)}`);
   redirect("/login?sent=1");
 }
+
+export async function signInWithPassword(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const fail = () => redirect("/login?mode=password&error=" + encodeURIComponent("Invalid email or password"));
+
+  if (!isAllowedEmail(email) || !password) fail();
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) fail();
+  redirect("/");
+}
