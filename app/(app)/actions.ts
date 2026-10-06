@@ -134,3 +134,23 @@ export async function saveThesis(fd: FormData) {
   revalidatePath("/thesis");
   redirect("/thesis?saved=1");
 }
+
+export async function runDiscovery(fd: FormData) {
+  const { discoverCompanies } = await import("@/lib/discovery");
+  const phases = (["PHASE1", "PHASE2", "PHASE3"] as const).filter((p) => fd.get(p) === "on");
+  const supabase = await createClient();
+  let query: string;
+  try {
+    const r = await discoverCompanies(supabase, {
+      conditions: str(fd, "conditions") ?? undefined,
+      phases: phases.length ? [...phases] : undefined,
+      limit: int(fd, "limit") ?? 50,
+      trigger: "manual",
+    });
+    query = `added=${r.added}&scanned=${r.scanned}`;
+  } catch (e) {
+    query = `error=${encodeURIComponent(e instanceof Error ? e.message : String(e))}`;
+  }
+  revalidateAll();
+  redirect(`/discover?${query}`);
+}

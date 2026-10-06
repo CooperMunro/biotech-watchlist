@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isAllowedEmail } from "@/lib/auth";
 
-const PUBLIC_PATHS = ["/login", "/auth/callback"];
+// /api/discover checks its own auth (cron secret or signed-in owner).
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/api/discover"];
 
 const REQUIRED_ENV = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

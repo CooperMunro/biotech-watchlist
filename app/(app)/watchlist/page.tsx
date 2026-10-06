@@ -103,7 +103,10 @@ export default async function Watchlist({ searchParams }: { searchParams: Promis
               <tr key={c.id} className="hover:bg-gray-50">
                 <td className="td">
                   <Link href={`/watchlist/${c.id}`} className="font-medium hover:text-blue-700">{c.name}</Link>
-                  <div className="text-xs text-gray-500">{c.ticker_or_private ?? ""}</div>
+                  <div className="text-xs text-gray-500">
+                    {c.ticker_or_private ?? ""}
+                    {c.source === "auto" && <span className="ml-1 rounded bg-gray-100 px-1 text-[10px] uppercase text-gray-500">auto</span>}
+                  </div>
                 </td>
                 <td className="td"><TierBadge tier={c.tier} /></td>
                 <td className="td font-semibold">{c.score ?? "—"}</td>

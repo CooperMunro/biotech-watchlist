@@ -25,6 +25,8 @@ export type Company = {
   decision: Decision | null;
   notes: string | null;
   last_reviewed: string | null;
+  source: "manual" | "auto" | null;
+  discovered_at: string | null;
   created_at: string;
   updated_at: string;
 };

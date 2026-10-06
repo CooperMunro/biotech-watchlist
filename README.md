@@ -65,4 +65,12 @@ Four layers, any one of which blocks a stranger:
 - **Scoring rubric**: 5 categories (science/data, team & backers, catalyst proximity, funding/runway, market & differentiation), each 0–2, summed live to the 0–10 score. Per-category values are stored in a `rubric` jsonb column so you can re-score later; edit the categories and hints in `lib/types.ts`.
 - **Auto-tiering** (`lib/tiering.ts`): runs on save when Tier is left on "Auto". Score ≥ 7 and catalyst within 6 months → Tier 1; score ≥ 4 → Tier 2; else Tier 3. Pick a tier manually to override.
 - **Review page**: "Hold" writes `Watch` (the schema's decision values are Buy/Watch/Pass) and stamps today as `last_reviewed`.
-- **Not built (v2)**: ClinicalTrials.gov auto-pull cron, email/Slack catalyst alerts.
+- **Not built yet**: email/Slack catalyst alerts.
+
+## Auto-discovery
+`/discover` scans ClinicalTrials.gov for industry-sponsored, active Phase 1–3 interventional trials, groups them by sponsor, skips big pharma (list in `lib/discovery.ts`) and names already on the list, and inserts up to 50 new companies per run. Each gets stage, lead program, modality (inferred from the intervention name), NCT ID, next catalyst (earliest upcoming primary completion), ticker if found in SEC's company list, CT.gov source links, and a partial score (science from phase, catalyst from date, pipeline depth as a team proxy). Financing, runway and market are left for review.
+
+It also runs weekly (Mondays 13:00 UTC) through Vercel Cron, configured in `vercel.json`. Setup:
+1. Run `supabase/migrations/002_discovery.sql` in the SQL Editor (already included in `schema.sql` for new installs).
+2. In Vercel, add `SUPABASE_SERVICE_ROLE_KEY` (Secret; Supabase → Settings → API Keys → service_role/secret) and `CRON_SECRET` (Secret; any long random string). Optional: `DISCOVERY_CONDITIONS` for the weekly run's disease focus.
+3. Redeploy.
