@@ -1,3 +1,4 @@
+import DbError from "@/components/DbError";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { addDaysISO, fmtDate } from "@/lib/dates";
@@ -21,7 +22,7 @@ export default async function Review() {
     .or(`tier.eq.1,last_reviewed.is.null,last_reviewed.lt.${cutoff}`)
     .order("tier", { ascending: true })
     .order("catalyst_date", { ascending: true, nullsFirst: false });
-  if (error) throw new Error(error.message);
+  if (error) return <DbError message={error.message} />;
   const companies = (data ?? []) as Company[];
 
   return (

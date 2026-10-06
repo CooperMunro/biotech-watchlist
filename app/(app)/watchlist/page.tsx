@@ -1,3 +1,4 @@
+import DbError from "@/components/DbError";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { fmtDate } from "@/lib/dates";
@@ -27,7 +28,7 @@ export default async function Watchlist({ searchParams }: { searchParams: Promis
   if (sp.q) query = query.or(`name.ilike.%${sp.q.replace(/[%,()]/g, "")}%,lead_program.ilike.%${sp.q.replace(/[%,()]/g, "")}%`);
   query = query.order(SORTS[sortKey], { ascending: asc, nullsFirst: false });
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  if (error) return <DbError message={error.message} />;
   const companies = (data ?? []) as Company[];
 
   const { data: modRows } = await supabase.from("companies").select("modality");

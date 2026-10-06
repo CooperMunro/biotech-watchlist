@@ -1,3 +1,4 @@
+import DbError from "@/components/DbError";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { addDaysISO, fmtDate, todayISO } from "@/lib/dates";
@@ -7,7 +8,7 @@ import type { Company } from "@/lib/types";
 export default async function Dashboard() {
   const supabase = await createClient();
   const { data, error } = await supabase.from("companies").select("*");
-  if (error) throw new Error(error.message);
+  if (error) return <DbError message={error.message} />;
   const companies = (data ?? []) as Company[];
 
   const today = todayISO();

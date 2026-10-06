@@ -1,3 +1,4 @@
+import DbError from "@/components/DbError";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { daysUntil, fmtDate, todayISO } from "@/lib/dates";
@@ -10,7 +11,7 @@ export default async function Calendar({ searchParams }: { searchParams: Promise
   let query = supabase.from("companies").select("*").not("catalyst_date", "is", null);
   if (!past) query = query.gte("catalyst_date", todayISO());
   const { data, error } = await query.order("catalyst_date", { ascending: true });
-  if (error) throw new Error(error.message);
+  if (error) return <DbError message={error.message} />;
   const companies = (data ?? []) as Company[];
 
   return (
